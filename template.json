@@ -5,7 +5,8 @@
     },
     "variables": {
         "atlas_username": "{{env `ATLAS_USERNAME`}}",
-        "atlas_name": "{{env `ATLAS_NAME`}}"
+        "atlas_name": "{{env `ATLAS_NAME`}}",
+        "username": "{{env `DEVBOX_USERNAME`}}"
     },
     "provisioners": [
         {
@@ -13,14 +14,26 @@
             "scripts": [
                 "scripts/base.sh",
                 "scripts/virtualbox.sh",
-                "scripts/dep.sh",
-                "scripts/i3.sh"
-            ],
-            "override": {
-                "virtualbox-iso": {
-                    "execute_command": "echo 'vagrant'|sudo -S bash '{{.Path}}'"
-                }
-            }
+                "scripts/dep.sh"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "adduser -p '' {{user `username`}}",
+                "chage -d0 {{user `username`}}",
+
+                "cat <<EOF > /etc/lightdm/lightdm.conf.d/10-auto-login.conf",
+                "[SeatDefaults]",
+                "user-session=i3",
+                "autologin-user={{user `username`}}",
+                "EOF",
+
+                "cat <<EOF > /etc/sudoers.d/user",
+                "Defaults:{{user `username`}} !requiretty",
+                "{{user `username`}} ALL=(ALL) NOPASSWD: ALL",
+                "EOF"
+            ]
         }
     ],
     "builders": [
@@ -29,7 +42,7 @@
             "boot_command": [
                 "<esc>",
                 "<wait>",
-                "linux inst.ks=http://{{.HTTPIP}}:{{.HTTPPort}}/anaconda-ks.cfg inst.nodnf=1 biosdevname=0 net.ifnames=0",
+                "linux inst.ks=http://{{.HTTPIP}}:{{.HTTPPort}}/anaconda-ks.cfg",
                 "<enter>"
             ],
             "headless": false,
@@ -40,11 +53,11 @@
             "iso_checksum": "9687469cf8519101cf3b393bff92474b",
             "iso_checksum_type": "md5",
             "iso_url": "https://download.fedoraproject.org/pub/fedora/linux/releases/22/Workstation/x86_64/iso/Fedora-Workstation-netinst-x86_64-22.iso",
-            "ssh_username": "vagrant",
-            "ssh_password": "vagrant",
+            "ssh_username": "root",
+            "ssh_password": "root",
             "ssh_port": 22,
             "ssh_wait_timeout": "10000s",
-            "shutdown_command": "echo '/sbin/halt -h -p' > shutdown.sh; echo 'vagrant'|sudo -S bash 'shutdown.sh'",
+            "shutdown_command": "/sbin/halt -h -p",
             "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
             "virtualbox_version_file": ".vbox_version",
             "vboxmanage": [
