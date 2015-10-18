@@ -45,7 +45,7 @@
                 "linux inst.ks=http://{{.HTTPIP}}:{{.HTTPPort}}/anaconda-ks.cfg",
                 "<enter>"
             ],
-            "headless": false,
+            "headless": true,
             "boot_wait": "10s",
             "disk_size": 20480,
             "guest_os_type": "Fedora_64",
@@ -62,11 +62,25 @@
             "virtualbox_version_file": ".vbox_version",
             "vboxmanage": [
                 ["modifyvm", "{{.Name}}", "--clipboard", "bidirectional"],
-                ["modifyvm", "{{.Name}}", "--memory", "2048"],
-                ["modifyvm", "{{.Name}}", "--cpus", "2"],
                 ["modifyvm", "{{.Name}}", "--nictype1", "virtio"],
                 ["modifyvm", "{{.Name}}", "--paravirtprovider", "kvm"]
             ]
         }
+    ],
+    "post-processors": [
+        [{
+            "type": "vagrant",
+            "keep_input_artifact": false
+        },
+        {
+            "type": "atlas",
+            "only": ["virtualbox-iso"],
+            "artifact": "{{user `atlas_username`}}/{{user `atlas_name`}}",
+            "artifact_type": "vagrant.box",
+            "metadata": {
+                "provider": "virtualbox",
+                "version": "0.0.1"
+            }
+        }]
     ]
 }
